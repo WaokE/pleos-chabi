@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Chabi" parent="android:style/Theme.Material.NoActionBar">
+        <item name="android:fontFamily">@font/asta_sans</item>
+        <item name="android:colorAccent">#A4E2C1</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:statusBarColor">#131417</item>
+        <item name="android:navigationBarColor">#131417</item>
+        <item name="android:windowBackground">#131417</item>
+    </style>
+</resources>
