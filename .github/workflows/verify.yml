@@ -25,7 +25,8 @@ jobs:
           distribution: temurin
           java-version: '17'
           cache: gradle
+      # The hosted runner ships the Android SDK under ANDROID_HOME, but sdkmanager is not on PATH.
       - name: Install Android build packages
-        run: sdkmanager "platforms;android-36" "build-tools;35.0.0"
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36" "build-tools;35.0.0"
       - name: Architecture, tests, APK and lint
         run: ./scripts/check.sh --no-daemon
