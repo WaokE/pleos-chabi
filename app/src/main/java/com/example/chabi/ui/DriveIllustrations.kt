@@ -76,7 +76,7 @@ fun DriveJourneyArt(modifier: Modifier = Modifier) {
     }
 }
 
-enum class DriveSymbol { ROUTE, WALLET, PEOPLE, CHECK, FUEL, CLOCK, QR }
+enum class DriveSymbol { ROUTE, WALLET, PEOPLE, CHECK, FUEL, CLOCK }
 
 @Composable
 fun DriveIcon(symbol: DriveSymbol, modifier: Modifier = Modifier, tint: Color = Teal) {
@@ -107,13 +107,6 @@ fun DriveIcon(symbol: DriveSymbol, modifier: Modifier = Modifier, tint: Color = 
                     val p = Path().apply { moveTo(15f, 12f); lineTo(18f, 12f); lineTo(18f, 18f); quadraticTo(22f, 22f, 22f, 17f); lineTo(22f, 8f); lineTo(19f, 5f) }; drawPath(p, tint, style = stroke)
                 }
                 DriveSymbol.CLOCK -> { drawCircle(tint, 9f, Offset(12f, 12f), style = stroke); line(Offset(12f, 6f), Offset(12f, 12f)); line(Offset(12f, 12f), Offset(16f, 14f)) }
-                DriveSymbol.QR -> {
-                    for (corner in listOf(Offset(3f, 3f), Offset(14f, 3f), Offset(3f, 14f))) {
-                        drawRoundRect(tint, corner, Size(7f, 7f), CornerRadius(1f), style = stroke)
-                    }
-                    drawRect(tint, Offset(13f, 13f), Size(4f, 4f))
-                    drawRect(tint, Offset(18f, 18f), Size(4f, 4f))
-                }
             }
         }
     }

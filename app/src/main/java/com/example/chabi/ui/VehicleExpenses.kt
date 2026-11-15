@@ -52,9 +52,13 @@ fun VehicleExpenses(state: DriveUiState, vm: ChabiViewModel) {
         }
     }
     val existing = state.draft.expenses.find { it.id == editingId }
-    if (adding || existing != null) ExpenseEditor(existing, state.draft.participants,
-        onDismiss = { adding = false; editingId = null },
-        onSave = { vm.saveExpense(it); adding = false; editingId = null })
+    val dismissEditor = { adding = false; editingId = null }
+    PleosModal(adding || existing != null, onDismiss = dismissEditor) {
+        // Keep the entry being edited in place while the form fades out.
+        val initialExpense = remember { existing }
+        ExpenseEditor(initialExpense, state.draft.participants, onDismiss = dismissEditor,
+            onSave = { vm.saveExpense(it); dismissEditor() })
+    }
 }
 
 @Composable
@@ -71,7 +75,7 @@ private fun ExpenseEditor(existing: Expense?, people: List<Participant>, onDismi
     val numericAmount = amount.toLongOrNull()
     val amountInRange = numericAmount != null && numericAmount in 1..MAX_EXPENSE_WON
     val valid = title.isNotBlank() && amountInRange && (everyone || selected.isNotEmpty())
-    PleosFormDialog(title = if (existing == null) "비용 추가" else "비용 수정", onDismiss = onDismiss,
+    PleosForm(title = if (existing == null) "비용 추가" else "비용 수정", onDismiss = onDismiss,
         confirmEnabled = valid, confirmTag = "save-expense", onConfirm = { if (valid) onSave(Expense(id, ExpenseCategory.valueOf(categoryName), title.trim(),
             numericAmount!!, memo.trim(), if (everyone) null else selected)) }) {
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {

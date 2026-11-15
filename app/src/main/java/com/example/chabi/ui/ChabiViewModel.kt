@@ -133,10 +133,20 @@ class ChabiViewModel(private val repository: TripRepository, private val store: 
     fun renamePerson(id: String, name: String) = change {
         copy(participants = participants.map { if (it.id == id) it.copy(name = name.take(20)) else it })
     }
+    fun setCardDraw(draw: CardDrawResult?) {
+        val state = mutableState.value
+        val settlement = state.settlement ?: return
+        if (state.step != Step.RESULT || draw?.matches(settlement) == false) return
+        save(state.copy(draft = state.draft.copy(cardDraw = draw)))
+    }
+
     private fun change(block: SettlementDraft.() -> SettlementDraft) {
         val state = mutableState.value
         val edited = state.draft.block()
-        val draft = edited.copy(resumeStage = state.step.draftStage ?: edited.resumeStage)
+        val draft = edited.copy(
+            resumeStage = state.step.draftStage ?: edited.resumeStage,
+            cardDraw = edited.cardDraw.takeIf { edited == state.draft },
+        )
         save(derive(state.copy(draft = draft)))
     }
     private fun save(state: DriveUiState) {

@@ -38,10 +38,9 @@ class PleosContrastTest {
         }
         for (dark in listOf(false, true)) {
             val c = pleosColors(dark)
-            val onAccent = if (dark) PleosTokens.gray900 else Color.White
-            check("$dark branded primary action", onAccent, c.accent)
+            check("$dark branded primary action", c.onAccent, c.accent)
             check("$dark selected pill", c.accent, c.accentContainer)
-            check("$dark pressed primary action", onAccent, androidx.compose.ui.graphics.lerp(c.accent, c.text, .12f))
+            check("$dark pressed primary action", c.onAccent, androidx.compose.ui.graphics.lerp(c.accent, c.text, .12f))
         }
         check("summary accent", Color(0xFFA4E2C1), PleosTokens.gray900)
         check("summary label", Color(0xFFD9DADD), PleosTokens.gray900)

@@ -62,15 +62,6 @@ fun ChabiApp(viewModel: ChabiViewModel, access: DrivingAccess, retryConnection: 
                         }
                         Spacer(Modifier.height(12.dp))
                     }
-                    if (state.step != Step.HOME) {
-                        Spacer(Modifier.height(if (compact) 8.dp else 18.dp))
-                        Text(when (state.step) {
-                            Step.TRIPS -> "정산할 운행을 골라요"
-                            Step.REVIEW -> "비용과 인원을 확인해요"
-                            else -> "나눌 금액을 확인해요"
-                        }, style = if (compact) MaterialTheme.typography.titleSmall else MaterialTheme.typography.titleLarge, maxLines = 2)
-                        Spacer(Modifier.height(if (compact) 16.dp else 24.dp))
-                    }
                     Box(Modifier.weight(1f)) {
                         when {
                             state.loading -> CircularProgressIndicator(Modifier.align(Alignment.Center))
@@ -78,20 +69,38 @@ fun ChabiApp(viewModel: ChabiViewModel, access: DrivingAccess, retryConnection: 
                                 SectionTitle("운행 기록을 불러오지 못했어요", "작성하던 내용은 그대로 남아 있어요.")
                                 PleosButton(onClick = viewModel::loadTrips) { Text("다시 불러오기") }
                             }
-                            else -> key(state.step) {
-                                when (state.step) {
-                                    Step.HOME -> HomeScreen(state, viewModel)
-                                    Step.TRIPS -> TripStep(state, viewModel, mapProvider)
-                                    Step.REVIEW -> ReviewScreen(state, viewModel)
-                                    Step.RESULT -> ResultStep(state, viewModel, qrEncoder)
-                                }
+                            else -> AnimatedStep(state, Modifier.fillMaxSize()) { pageState ->
+                                StepPage(pageState, viewModel, compact, mapProvider, qrEncoder)
                             }
                         }
                     }
-                    if (!state.loading && !state.loadError && state.step in listOf(Step.TRIPS, Step.REVIEW)) StepFooter(state, viewModel)
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun StepPage(state: DriveUiState, vm: ChabiViewModel, compact: Boolean, mapProvider: RouteMapProvider, qrEncoder: QrEncoder) {
+    Column(Modifier.fillMaxSize()) {
+        if (state.step != Step.HOME) {
+            Spacer(Modifier.height(if (compact) 8.dp else 18.dp))
+            Text(when (state.step) {
+                Step.TRIPS -> "정산할 운행을 골라요"
+                Step.REVIEW -> "비용과 인원을 확인해요"
+                else -> "나눌 금액을 확인해요"
+            }, style = if (compact) MaterialTheme.typography.titleSmall else MaterialTheme.typography.titleLarge, maxLines = 2)
+            Spacer(Modifier.height(if (compact) 16.dp else 24.dp))
+        }
+        Box(Modifier.weight(1f)) {
+            when (state.step) {
+                Step.HOME -> HomeScreen(state, vm)
+                Step.TRIPS -> TripStep(state, vm, mapProvider)
+                Step.REVIEW -> ReviewScreen(state, vm)
+                Step.RESULT -> ResultStep(state, vm, qrEncoder)
+            }
+        }
+        if (state.step == Step.TRIPS || state.step == Step.REVIEW) StepFooter(state, vm)
     }
 }
 
@@ -109,11 +118,11 @@ private fun AppHeader(state: DriveUiState, vm: ChabiViewModel) {
                     Text(stringResource(R.string.app_name), style = MaterialTheme.typography.titleSmall)
                 }
                 if (wide && state.step != Step.HOME) FlowSteps(state.step)
-                Surface(color = if (state.source == TripDataSource.MOCK) LocalPleosColors.current.warningContainer else Mint,
-                    shape = RoundedCornerShape(20.dp)) {
-                    Text(if (state.source == TripDataSource.MOCK) "예시 데이터 · MOCK" else state.source.label,
-                        Modifier.padding(horizontal = 16.dp, vertical = 12.dp), style = MaterialTheme.typography.labelSmall,
-                        color = if (state.source == TripDataSource.MOCK) Orange else Teal, maxLines = 2)
+                if (state.source != TripDataSource.MOCK) {
+                    Surface(color = Mint, shape = RoundedCornerShape(20.dp)) {
+                        Text(state.source.label, Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                            style = MaterialTheme.typography.labelSmall, color = Teal, maxLines = 2)
+                    }
                 }
                 if (state.step == Step.RESULT) PleosTextButton(onClick = { vm.setStep(Step.HOME) }, modifier = Modifier.testTag("go-home")) { Text("홈") }
             }

@@ -88,6 +88,12 @@ data class Settlement(
 
 enum class DraftStage { TRIPS, REVIEW, RESULT }
 
+/** The payer is identified by their turn in the draw. Turns start at one. */
+data class CardDrawResult(val payerTurn: Int, val participantCount: Int, val totalWon: Long) {
+    fun matches(settlement: Settlement): Boolean = participantCount >= 2 && payerTurn in 1..participantCount &&
+        participantCount == settlement.shares.size && totalWon > 0 && totalWon == settlement.totalWon
+}
+
 /** Editable input stays textual until validation; blank/invalid input must not become zero. */
 data class SettlementDraft(
     // Shared text starts with "[차비] <title>", so the default must not repeat the app name.
@@ -107,4 +113,5 @@ data class SettlementDraft(
         Participant("guest-2", "동행 2"), Participant("guest-3", "동행 3"),
     ),
     val resumeStage: DraftStage? = null,
+    val cardDraw: CardDrawResult? = null,
 )

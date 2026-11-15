@@ -10,6 +10,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.*
 import androidx.compose.ui.text.style.TextOverflow
@@ -52,18 +54,18 @@ data class PleosColors(
     val dark: Boolean,
     val background: Color, val surface: Color, val popup: Color, val high: Color,
     val text: Color, val secondary: Color, val outline: Color,
-    val accent: Color, val accentContainer: Color,
+    val accent: Color, val onAccent: Color, val accentContainer: Color,
     val warning: Color, val warningContainer: Color, val error: Color,
 )
 
 internal fun pleosColors(dark: Boolean) = if (dark) PleosColors(
     true, PleosTokens.gray900, PleosTokens.gray800, PleosTokens.gray900, PleosTokens.gray700,
     PleosTokens.white, Color(0xFFD9DADD), PleosTokens.gray600,
-    Color(0xFFA4E2C1), Color(0xFF193D32), Color(0xFFFFCB93), Color(0xFF422B18), Color(0xFFFFB4AB),
+    Color(0xFFA4E2C1), PleosTokens.gray900, Color(0xFF193D32), Color(0xFFFFCB93), Color(0xFF422B18), Color(0xFFFFB4AB),
 ) else PleosColors(
     false, PleosTokens.gray50, PleosTokens.white, PleosTokens.white, PleosTokens.gray100,
     PleosTokens.gray900, Color(0xFF393A3D), PleosTokens.gray200,
-    Color(0xFF126B58), Color(0xFFE4F1E6), Color(0xFF884010), Color(0xFFFFEDD9), Color(0xFFB3261E),
+    Color(0xFF126B58), Color.White, Color(0xFFE4F1E6), Color(0xFF884010), Color(0xFFFFEDD9), Color(0xFFB3261E),
 )
 
 val LocalPleosColors = staticCompositionLocalOf { pleosColors(false) }
@@ -88,14 +90,19 @@ private fun type(size: Int, weight: FontWeight = FontWeight.Normal) = TextStyle(
 
 @Composable
 fun DriveTheme(dark: Boolean = isSystemInDarkTheme(), content: @Composable () -> Unit) {
-    val colors = pleosColors(dark)
+    val resources = LocalResources.current
+    val configuration = LocalConfiguration.current
+    val colors = remember(resources, configuration, dark) {
+        val fallback = pleosColors(dark)
+        readOemPalette(resources, fallback) ?: fallback
+    }
     val scheme = if (dark) darkColorScheme() else lightColorScheme()
     CompositionLocalProvider(LocalPleosColors provides colors) {
         MaterialTheme(
             colorScheme = scheme.copy(
-                primary = colors.accent, onPrimary = if (dark) PleosTokens.gray900 else Color.White,
+                primary = colors.accent, onPrimary = colors.onAccent,
                 primaryContainer = colors.accentContainer, onPrimaryContainer = colors.accent,
-                secondary = colors.accent, onSecondary = if (dark) PleosTokens.gray900 else Color.White,
+                secondary = colors.accent, onSecondary = colors.onAccent,
                 secondaryContainer = colors.accentContainer, onSecondaryContainer = colors.accent,
                 background = colors.background, onBackground = colors.text, surface = colors.surface,
                 onSurface = colors.text, surfaceVariant = colors.high, onSurfaceVariant = colors.secondary,

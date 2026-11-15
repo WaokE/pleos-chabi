@@ -177,6 +177,29 @@ class ChabiViewModelTest {
         assertEquals(Step.TRIPS, atResult.state.value.step)
     }
 
+    @Test fun `confirmed card draw survives resume and is cleared when settlement inputs change`() {
+        val store = MemoryStore()
+        fun open() = ChabiViewModel(mockTrips(), store, MockDriveDefaultsRepository())
+        val vm = open()
+        vm.startNew()
+        vm.toggleGroup(MockTripRepository.weekendIds)
+        vm.next()
+        vm.next()
+        val draw = CardDrawResult(payerTurn = 3, participantCount = 4, totalWon = 56_440)
+        vm.setCardDraw(draw.copy(payerTurn = 5))
+        assertNull(vm.state.value.draft.cardDraw)
+        vm.setCardDraw(draw)
+
+        val restored = open()
+        restored.resumeDraft()
+        assertEquals(Step.RESULT, restored.state.value.step)
+        assertEquals(draw, restored.state.value.draft.cardDraw)
+        restored.back()
+        restored.setParticipantCount(3)
+        assertNull(restored.state.value.draft.cardDraw)
+        assertNull(store.draft?.cardDraw)
+    }
+
     @Test fun `new settlement resets extras and people while resume preserves all legacy inputs`() {
         val original = SettlementDraft(selectedTripIds = MockTripRepository.weekendIds,
             expenses = listOf(Expense("legacy", ExpenseCategory.OTHER, "커피", 1001, participantIds = setOf("me"))))

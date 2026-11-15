@@ -119,7 +119,10 @@ fun ReviewScreen(state: DriveUiState, vm: ChabiViewModel) {
             people(); VehicleExpenses(state, vm)
         }
     }
-    if (editBasis) CostBasisEditor(state, vm, onDismiss = { editBasis = false })
+    val dismissBasis = { editBasis = false }
+    PleosModal(editBasis, onDismiss = dismissBasis) {
+        CostBasisEditor(state, vm, onDismiss = dismissBasis)
+    }
 }
 
 @Composable
@@ -143,7 +146,7 @@ private fun CostBasisEditor(state: DriveUiState, vm: ChabiViewModel, onDismiss: 
     val draft = preset?.let { editor.previewCostSettings(state.draft, it, efficiency, price, useTrip, reference) }
         ?: state.draft.copy(efficiencyInput = efficiency, unitPriceInput = price, useTripEfficiency = useTrip)
     val validation = runCatching { EnergyCalculator.settings(draft) }
-    PleosFormDialog("계산 기준 변경", onDismiss, validation.isSuccess, onConfirm = {
+    PleosForm("계산 기준 변경", onDismiss, validation.isSuccess, onConfirm = {
         vm.applyCostSettings(profileId, efficiency, price, useTrip, reference); onDismiss()
     }, confirmLabel = "적용", confirmTag = "apply-cost-basis") {
         FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {

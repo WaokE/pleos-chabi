@@ -14,6 +14,7 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -79,13 +80,26 @@ fun EmbeddedRouteMap(provider: RouteMapProvider, scene: RouteMapScene, modifier:
                 }
             }
         }
-        Column(Modifier.align(Alignment.BottomEnd).padding(12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            PleosOutlinedButton(onClick = session::zoomIn,
-                modifier = Modifier.size(80.dp).testTag("map-zoom-in"), contentPadding = PaddingValues(0.dp)) { Text("+") }
-            PleosOutlinedButton(onClick = session::zoomOut,
-                modifier = Modifier.size(80.dp).testTag("map-zoom-out"), contentPadding = PaddingValues(0.dp)) { Text("−") }
-            PleosOutlinedButton(onClick = session::fitRoutes,
-                modifier = Modifier.heightIn(min = 80.dp).testTag("map-fit")) { Text("전체 경로") }
+        Column(
+            Modifier.align(Alignment.BottomStart).fillMaxWidth().padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Column(Modifier.align(Alignment.End), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                PleosOutlinedButton(onClick = session::zoomIn,
+                    modifier = Modifier.size(80.dp).testTag("map-zoom-in"), contentPadding = PaddingValues(0.dp)) { Text("+") }
+                PleosOutlinedButton(onClick = session::zoomOut,
+                    modifier = Modifier.size(80.dp).testTag("map-zoom-out"), contentPadding = PaddingValues(0.dp)) { Text("−") }
+                PleosOutlinedButton(onClick = session::fitRoutes,
+                    modifier = Modifier.heightIn(min = 80.dp).testTag("map-fit")) { Text("전체 경로") }
+            }
+            Surface(color = colors.popup, shape = RoundedCornerShape(8.dp)) {
+                Text(
+                    "${provider.info.attribution}\n${provider.info.licenseUrl.removePrefix("https://")}",
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp).testTag("map-attribution"),
+                    color = colors.text,
+                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 16.sp, lineHeight = 20.sp),
+                )
+            }
         }
     }
 }

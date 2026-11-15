@@ -34,6 +34,9 @@ class LocalDraftStore(context: Context, private val ioDispatcher: CoroutineDispa
                     if (it.isNull("people")) null else it.getJSONArray("people").strings().toSet())
             },
             resumeStage = DraftStage.entries.find { it.name == value.optString("resumeStage") },
+            cardDraw = value.optJSONObject("cardDraw")?.let {
+                CardDrawResult(it.optInt("payerTurn"), it.optInt("participantCount"), it.optLong("totalWon"))
+            },
         )
     }
     override suspend fun save(draft: SettlementDraft): Unit = withContext(ioDispatcher) { writeLock.withLock {
@@ -45,6 +48,10 @@ class LocalDraftStore(context: Context, private val ioDispatcher: CoroutineDispa
             put("energyProfileId", draft.energyProfileId); put("priceSource", draft.priceSource)
             put("priceAsOf", draft.priceAsOf); put("priceIsMock", draft.priceIsMock)
             put("resumeStage", draft.resumeStage?.name)
+            draft.cardDraw?.let { draw ->
+                put("cardDraw", JSONObject().put("payerTurn", draw.payerTurn)
+                    .put("participantCount", draw.participantCount).put("totalWon", draw.totalWon))
+            }
             put("participants", JSONArray(draft.participants.map { JSONObject().put("id", it.id).put("name", it.name) }))
             put("expenses", JSONArray(draft.expenses.map {
                 JSONObject().put("id", it.id).put("category", it.category.name).put("title", it.title)

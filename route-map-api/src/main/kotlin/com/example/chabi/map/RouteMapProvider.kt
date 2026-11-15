@@ -12,8 +12,7 @@ interface RouteMapProvider {
     fun create(context: Context, onRouteTap: (String) -> Unit): RouteMapSession
 }
 
-data class MapProviderInfo(val name: String, val attribution: String, val links: List<MapCredit>)
-data class MapCredit(val label: String, val url: String)
+data class MapProviderInfo(val attribution: String, val licenseUrl: String)
 
 /** All SDK-specific View, geometry, camera, and error types stay inside the implementation. */
 interface RouteMapSession : AutoCloseable {

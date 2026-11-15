@@ -30,9 +30,9 @@ import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 
 /** Material behavior with Pleos medium geometry, palette, state feedback and typography. */
 @Composable
@@ -50,7 +50,7 @@ fun PleosButton(onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boo
         shape = shape, contentPadding = contentPadding, interactionSource = source,
         colors = ButtonDefaults.buttonColors(
             containerColor = if (pressed) lerp(colors.accent, colors.text, .12f) else colors.accent,
-            contentColor = if (colors.dark) PleosTokens.gray900 else Color.White, disabledContainerColor = colors.high, disabledContentColor = colors.secondary,
+            contentColor = colors.onAccent, disabledContainerColor = colors.high, disabledContentColor = colors.secondary,
         ), content = content,
     )
 }
@@ -126,7 +126,7 @@ fun PleosTextField(value: String, onValueChange: (String) -> Unit, modifier: Mod
 fun PleosCheckbox(checked: Boolean) {
     val accent = Teal
     val outline = LocalPleosColors.current.secondary
-    val inkOnAccent = if (LocalPleosColors.current.dark) PleosTokens.gray900 else Color.White
+    val inkOnAccent = LocalPleosColors.current.onAccent
     Canvas(Modifier.size(48.dp)) {
         if (checked) {
             drawRoundRect(accent, cornerRadius = CornerRadius(12.dp.toPx()))
@@ -151,7 +151,7 @@ fun PleosSwitch(checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
         contentAlignment = Alignment.Center) {
         Canvas(Modifier.size(width = 80.dp, height = 48.dp)) {
             val track = if (checked) c.accent else if (c.dark) PleosTokens.gray300 else PleosTokens.gray600
-            val thumb = if (c.dark) PleosTokens.gray900 else Color.White
+            val thumb = if (checked) c.onAccent else if (c.dark) PleosTokens.gray900 else Color.White
             drawRoundRect(track, cornerRadius = CornerRadius(24.dp.toPx()))
             drawCircle(thumb, radius = 18.dp.toPx(), center = Offset(if (checked) size.width - 24.dp.toPx() else 24.dp.toPx(), size.height / 2))
         }
@@ -160,26 +160,27 @@ fun PleosSwitch(checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
 
 /** Official medium-popup width, scrollable body, and always reachable action area. */
 @Composable
-fun PleosFormDialog(title: String, onDismiss: () -> Unit, confirmEnabled: Boolean,
-    onConfirm: () -> Unit, confirmLabel: String = "저장", confirmTag: String = "confirm-dialog", showCancel: Boolean = true, body: @Composable ColumnScope.() -> Unit,
+fun PleosForm(title: String, onDismiss: () -> Unit, confirmEnabled: Boolean,
+    onConfirm: () -> Unit, confirmLabel: String = "저장", confirmTag: String = "confirm-dialog", showCancel: Boolean = true,
+    maxFormWidth: Dp = 760.dp,
+    titleStyle: TextStyle = MaterialTheme.typography.titleMedium,
+    body: @Composable ColumnScope.() -> Unit,
 ) {
-    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        BoxWithConstraints(Modifier.fillMaxSize().imePadding().padding(24.dp)
-            .semantics { testTagsAsResourceId = true }, contentAlignment = Alignment.Center) {
-            Surface(Modifier.widthIn(max = 760.dp).fillMaxWidth().heightIn(max = maxHeight),
-                shape = RoundedCornerShape(48.dp), color = LocalPleosColors.current.popup,
-                border = BorderStroke(2.dp, Line)) {
-                Column(Modifier.padding(48.dp), verticalArrangement = Arrangement.spacedBy(24.dp)) {
-                    Text(title, style = MaterialTheme.typography.titleMedium)
-                    Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()),
-                        verticalArrangement = Arrangement.spacedBy(20.dp), content = body)
-                    Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
-                        if (showCancel) PleosOutlinedButton(onClick = onDismiss, modifier = Modifier.weight(1f).heightIn(min = 100.dp),
-                            shape = RoundedCornerShape(32.dp)) { Text("취소") }
-                        PleosButton(onClick = onConfirm, enabled = confirmEnabled,
-                            modifier = Modifier.weight(1f).heightIn(min = 100.dp).testTag(confirmTag),
-                            shape = RoundedCornerShape(32.dp)) { Text(confirmLabel) }
-                    }
+    BoxWithConstraints(Modifier.fillMaxSize().imePadding().padding(24.dp)
+        .semantics { testTagsAsResourceId = true }, contentAlignment = Alignment.Center) {
+        Surface(Modifier.widthIn(max = maxFormWidth).fillMaxWidth().heightIn(max = maxHeight),
+            shape = RoundedCornerShape(48.dp), color = LocalPleosColors.current.popup,
+            border = BorderStroke(2.dp, Line)) {
+            Column(Modifier.padding(48.dp), verticalArrangement = Arrangement.spacedBy(24.dp)) {
+                Text(title, style = titleStyle)
+                Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(20.dp), content = body)
+                Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
+                    if (showCancel) PleosOutlinedButton(onClick = onDismiss, modifier = Modifier.weight(1f).heightIn(min = 100.dp),
+                        shape = RoundedCornerShape(32.dp)) { Text("취소") }
+                    PleosButton(onClick = onConfirm, enabled = confirmEnabled,
+                        modifier = Modifier.weight(1f).heightIn(min = 100.dp).testTag(confirmTag),
+                        shape = RoundedCornerShape(32.dp)) { Text(confirmLabel) }
                 }
             }
         }

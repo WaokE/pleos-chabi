@@ -13,7 +13,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.example.chabi.domain.Trip
-import com.example.chabi.domain.TripDataSource
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
@@ -54,8 +53,6 @@ fun HomeScreen(state: DriveUiState, vm: ChabiViewModel) {
     val overview: @Composable ColumnScope.() -> Unit = {
         DriveJourneyArt(Modifier.fillMaxWidth().height(330.dp))
         TripRecordSummary(state)
-        if (state.source == TripDataSource.MOCK) Text("지금은 예시 운행과 예시 단가로 보여드려요.",
-            style = MaterialTheme.typography.labelSmall, color = Muted)
     }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         if (maxWidth >= PleosBreakpoints.TwoColumnWidth) Row(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(vertical = 38.dp),
@@ -65,9 +62,12 @@ fun HomeScreen(state: DriveUiState, vm: ChabiViewModel) {
         } else Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(vertical = 24.dp),
             verticalArrangement = Arrangement.spacedBy(28.dp)) { welcome(); overview() }
     }
-    if (confirmNew) PleosFormDialog("새 정산을 시작할까요?", onDismiss = { confirmNew = false }, confirmEnabled = true,
-        onConfirm = { confirmNew = false; vm.startNew() }, confirmLabel = "새로 시작", confirmTag = "confirm-new") {
-        Hint("이전에 고른 운행과 입력한 비용·인원이 지워져요.")
+    val dismissConfirmation = { confirmNew = false }
+    PleosModal(confirmNew, onDismiss = dismissConfirmation) {
+        PleosForm("새 정산을 시작할까요?", onDismiss = dismissConfirmation, confirmEnabled = true,
+            onConfirm = { dismissConfirmation(); vm.startNew() }, confirmLabel = "새로 시작", confirmTag = "confirm-new") {
+            Hint("이전에 고른 운행과 입력한 비용·인원이 지워져요.")
+        }
     }
 }
 

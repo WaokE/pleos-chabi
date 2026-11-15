@@ -39,6 +39,7 @@ dependencies {
     implementation(project(":handoff-zxing"))
     implementation(libs.compose.foundation)
     implementation(libs.compose.material3)
+    implementation(libs.lottie.compose)
     implementation(libs.activity.compose)
     implementation(libs.lifecycle.viewmodel.compose)
     implementation(libs.lifecycle.runtime.compose)
