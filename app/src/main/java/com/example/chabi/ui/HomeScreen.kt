@@ -28,19 +28,26 @@ fun HomeScreen(state: DriveUiState, vm: ChabiViewModel) {
         Text("운행을 고르면 연료비를 계산해서\n인원수대로 나눠 드려요.",
             style = MaterialTheme.typography.bodyLarge, color = Muted)
         Spacer(Modifier.height(12.dp))
-        PleosButton(onClick = { if (state.hasDraft) confirmNew = true else vm.startNew() },
-            modifier = Modifier.fillMaxWidth().heightIn(min = 100.dp).testTag("new-settlement"), shape = RoundedCornerShape(32.dp)) {
-            DriveIcon(DriveSymbol.ROUTE, Modifier.size(28.dp), LocalContentColor.current)
-            Spacer(Modifier.width(14.dp)); Text("운행 고르기")
-        }
-        if (state.hasDraft) Surface(shape = RoundedCornerShape(24.dp), color = LocalPleosColors.current.surface) {
-            PleosTextButton(onClick = vm::resumeDraft, modifier = Modifier.fillMaxWidth().testTag("resume-settlement")) {
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text("작성하던 정산이 있어요", style = MaterialTheme.typography.bodySmall, color = Ink)
-                    Text(if (state.draft.selectedTripIds.isEmpty()) "저장한 비용과 인원이 있어요" else "운행 ${state.draft.selectedTripIds.size}개 · ${distance(state.distanceMeters)}",
-                        style = MaterialTheme.typography.labelSmall, color = Muted)
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            if (state.hasDraft) {
+                val tripCount = state.selectedTrips.size
+                val tripSummary = if (tripCount > 0) " · 운행 ${tripCount}개 · ${distance(state.distanceMeters)}" else ""
+                Text("${state.resumeStep.shortTitle}$tripSummary", style = MaterialTheme.typography.labelMedium, color = Muted)
+            }
+            PleosButton(
+                onClick = if (state.hasDraft) vm::resumeDraft else vm::startNew,
+                modifier = Modifier.fillMaxWidth().heightIn(min = 100.dp)
+                    .testTag(if (state.hasDraft) "resume-settlement" else "new-settlement"),
+                shape = RoundedCornerShape(32.dp),
+            ) {
+                DriveIcon(DriveSymbol.ROUTE, Modifier.size(28.dp), LocalContentColor.current)
+                Spacer(Modifier.width(14.dp))
+                Text(if (state.hasDraft) "이어서 하기" else "운행 고르기")
+            }
+            if (state.hasDraft) {
+                PleosOutlinedButton(onClick = { confirmNew = true }, modifier = Modifier.fillMaxWidth().testTag("new-settlement")) {
+                    Text("새 정산")
                 }
-                Text("이어서 하기", style = MaterialTheme.typography.labelMedium, color = Teal)
             }
         }
     }
@@ -60,7 +67,7 @@ fun HomeScreen(state: DriveUiState, vm: ChabiViewModel) {
     }
     if (confirmNew) PleosFormDialog("새 정산을 시작할까요?", onDismiss = { confirmNew = false }, confirmEnabled = true,
         onConfirm = { confirmNew = false; vm.startNew() }, confirmLabel = "새로 시작", confirmTag = "confirm-new") {
-        Hint("저장한 운행 선택과 비용·인원을 새 정산으로 바꿔요. 계속 작성하려면 취소를 눌러 주세요.")
+        Hint("이전에 고른 운행과 입력한 비용·인원이 지워져요.")
     }
 }
 

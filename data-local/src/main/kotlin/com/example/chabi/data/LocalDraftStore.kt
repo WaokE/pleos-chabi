@@ -33,6 +33,7 @@ class LocalDraftStore(context: Context, private val ioDispatcher: CoroutineDispa
                     it.getString("title"), it.getLong("amount"), it.optString("memo"),
                     if (it.isNull("people")) null else it.getJSONArray("people").strings().toSet())
             },
+            resumeStage = DraftStage.entries.find { it.name == value.optString("resumeStage") },
         )
     }
     override suspend fun save(draft: SettlementDraft): Unit = withContext(ioDispatcher) { writeLock.withLock {
@@ -43,6 +44,7 @@ class LocalDraftStore(context: Context, private val ioDispatcher: CoroutineDispa
             put("price", draft.unitPriceInput); put("useTripEfficiency", draft.useTripEfficiency)
             put("energyProfileId", draft.energyProfileId); put("priceSource", draft.priceSource)
             put("priceAsOf", draft.priceAsOf); put("priceIsMock", draft.priceIsMock)
+            put("resumeStage", draft.resumeStage?.name)
             put("participants", JSONArray(draft.participants.map { JSONObject().put("id", it.id).put("name", it.name) }))
             put("expenses", JSONArray(draft.expenses.map {
                 JSONObject().put("id", it.id).put("category", it.category.name).put("title", it.title)

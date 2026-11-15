@@ -55,7 +55,7 @@ Device Manager의 `Pleos_Connect_2_1_API_34`를 사용합니다. Cold Boot / RAM
 
 ## 차량 기본값과 단가
 
-`DriveDefaultsRepository`는 차량 기본값과 에너지별 기준 단가를 제공합니다. 현재 Application의 바인딩은 `MockDriveDefaultsRepository`입니다. 실제 차량/가격 소스를 도입할 때 이 경계를 교체하며, UI와 계산 계층에 SDK 타입을 전파하지 않습니다. 구현은 `data-local`, 계약은 `core`에 있습니다. 단가 출처·기준일은 초안에 저장하고 복사·QR에 포함합니다. 재실행 시 새 기본값으로 덮어쓰지 않습니다.
+`DriveDefaultsRepository`는 차량 기본값과 에너지별 기준 단가를 제공합니다. 현재 Application의 바인딩은 `MockDriveDefaultsRepository`입니다. 실제 차량/가격 소스를 도입할 때 이 경계를 교체하며, UI와 계산 계층에 SDK 타입을 전파하지 않습니다. 구현은 `data-local`, 계약은 `core`에 있습니다. 단가 출처·기준일은 초안에 저장하고 QR 요약에 포함합니다. 재실행 시 새 기본값으로 덮어쓰지 않습니다.
 
 가격 API와 실제 차량 연료 종류 자동 조회는 아직 구현하지 않았습니다. 상세 결정은 [UX_FLOW.md](UX_FLOW.md)에 기록했습니다.
 
@@ -106,6 +106,6 @@ Repository/초안 저장 계약은 순수 Kotlin `core`에 있고 ViewModel은 �
 
 ## QR와 검증 진입점
 
-`core/handoff/QrEncoder`는 라이브러리 중립 QR 매트릭스를 반환합니다. `handoff-zxing`이 CPU dispatcher에서 인코딩하며 ZXing 타입은 해당 모듈에만 있습니다. UI는 취소를 전파하고 중립 매트릭스를 그립니다. Android 클립보드/공유 Intent는 화면의 플랫폼 동작으로 앱 계층에 유지합니다.
+`core/handoff/QrEncoder`는 라이브러리 중립 QR 매트릭스를 반환합니다. `handoff-zxing`이 CPU dispatcher에서 인코딩하며 ZXing 타입은 해당 모듈에만 있습니다. UI는 취소를 전파하고 중립 매트릭스를 그립니다. 생성 실패 시 같은 요약으로 다시 시도할 수 있습니다.
 
 로컬과 CI는 `scripts/check.sh`를 공통 진입점으로 사용합니다. CI는 JDK 17과 Android Platform 36/Build Tools 35.0.0을 준비하며 에뮬레이터 없이 단위 테스트·구조 검사·Lint·debug APK를 검증합니다. 실제 차량/에뮬레이터 UI 검증을 대체하지 않습니다. [checkout 공식 사용법](https://github.com/actions/checkout), [setup-java 공식 사용법](https://github.com/actions/setup-java).

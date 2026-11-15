@@ -155,13 +155,28 @@ class SettlementCalculatorTest {
         }
     }
 
-    @Test fun `share text discloses mock data partial participants and exact amounts`() {
+    @Test fun `QR summary discloses mock data and exact amounts for partial expenses`() {
         val expense = Expense("coffee", ExpenseCategory.OTHER, "커피", 10_001, participantIds = setOf("p1", "p2"))
-        val text = SettlementText.create(SettlementCalculator.calculate(listOf(trip()), draft().copy(expenses = listOf(expense))), true)
+        val input = draft().copy(expenses = listOf(expense))
+        val result = SettlementCalculator.calculate(listOf(trip()), input)
+        val text = ResultSummary.create(result, input, isMock = true)
         assertTrue(text.contains("예시 운행으로 계산한 결과"))
-        assertTrue(text.contains("나눠 낸 사람: 참가자 1, 참가자 2"))
+        assertTrue(text.contains("추가 비용 10,001원"))
+        assertTrue(text.contains("참가자 1 19,111원"))
+        assertTrue(text.contains("참가자 3 14,110원"))
         assertTrue(text.contains("66,441원"))
         assertTrue(text.contains("등록 순서"))
+    }
+
+    @Test fun `remainder notice depends on each cost split even when the total divides evenly`() {
+        val input = draft().copy(expenses = listOf(
+            Expense("toll", ExpenseCategory.TOLL, "통행료", 1),
+            Expense("parking", ExpenseCategory.PARKING, "주차비", 3),
+        ))
+        val result = SettlementCalculator.calculate(listOf(trip()), input)
+        assertEquals(56_444L, result.totalWon)
+        assertTrue(result.hasRemainderAllocation)
+        assertTrue(ResultSummary.create(result, input, isMock = false).contains("남은 원"))
     }
     @Test fun `fractional unit price stays decimal until final won rounding`() {
         val input = draft().copy(unitPriceInput = "1700.25")

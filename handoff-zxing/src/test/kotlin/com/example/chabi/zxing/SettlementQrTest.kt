@@ -32,6 +32,7 @@ class SettlementQrTest {
         assertTrue(text.contains("실제 평균가가 아니에요"))
         assertTrue(text.contains("2026-11-04"))
         assertFalse(text.contains("http"))
+        assertFalse(text.contains("남은 원"))
     }
     @Test fun `maximum participant and money summary remains encodable with exact allocations`() = runTest {
         val trips = listOf(trip(98_000))

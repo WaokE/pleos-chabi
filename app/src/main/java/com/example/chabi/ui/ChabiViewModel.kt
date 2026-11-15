@@ -28,7 +28,7 @@ class ChabiViewModel(private val repository: TripRepository, private val store: 
                 try { store.save(draft) }
                 catch (cancelled: CancellationException) { throw cancelled }
                 catch (_: Exception) {
-                    mutableState.value = mutableState.value.copy(notice = "입력한 내용을 저장하지 못했어요. 앱을 닫기 전에 결과를 복사해 두세요.")
+                    mutableState.value = mutableState.value.copy(notice = "입력한 내용을 저장하지 못했어요. 앱을 닫으면 최근 입력을 잃을 수 있어요.")
                 }
             }
         }
@@ -75,8 +75,14 @@ class ChabiViewModel(private val repository: TripRepository, private val store: 
     fun setStep(step: Step) {
         val state = mutableState.value
         if (step == Step.RESULT && state.settlement == null) return
-        if (step == Step.REVIEW && (state.selectedTrips.isEmpty() || state.selectedTrips.size != state.draft.selectedTripIds.size)) return
-        mutableState.value = state.copy(step = step)
+        if (step == Step.REVIEW && !state.hasCompleteTripSelection) return
+        val next = state.copy(step = step)
+        val stage = step.draftStage
+        if (stage != null && state.hasDraft && stage != state.draft.resumeStage) {
+            save(next.copy(draft = state.draft.copy(resumeStage = stage)))
+        } else {
+            mutableState.value = next
+        }
     }
     fun next() { if (mutableState.value.canContinue) setStep(when (mutableState.value.step) {
         Step.HOME -> Step.TRIPS; Step.TRIPS -> Step.REVIEW; Step.REVIEW -> Step.RESULT; Step.RESULT -> Step.RESULT
@@ -84,12 +90,12 @@ class ChabiViewModel(private val repository: TripRepository, private val store: 
     fun back() = setStep(when (mutableState.value.step) {
         Step.HOME -> Step.HOME; Step.TRIPS -> Step.HOME; Step.REVIEW -> Step.TRIPS; Step.RESULT -> Step.REVIEW
     })
-    fun resumeDraft() = setStep(if (mutableState.value.selectedTrips.isNotEmpty() &&
-        mutableState.value.selectedTrips.size == mutableState.value.draft.selectedTripIds.size) Step.REVIEW else Step.TRIPS)
+    fun resumeDraft() = setStep(mutableState.value.resumeStep)
     fun startNew() {
-        val defaults = mutableState.value.defaults ?: return
-        change { editor.withPreset(SettlementDraft(), defaults.presets.first { it.id == defaults.recommendedId }) }
-        mutableState.value = mutableState.value.copy(step = Step.TRIPS, filter = TripFilter.ALL, focusedTripId = null)
+        val state = mutableState.value
+        val defaults = state.defaults ?: return
+        val draft = editor.withPreset(SettlementDraft(), defaults.presets.first { it.id == defaults.recommendedId })
+        save(derive(state.copy(draft = draft, step = Step.TRIPS, filter = TripFilter.ALL, focusedTripId = null)))
     }
     fun focusTrip(id: String) { if (mutableState.value.trips.any { it.id == id }) mutableState.value = mutableState.value.copy(focusedTripId = id) }
     fun setFilter(filter: TripFilter) { mutableState.value = mutableState.value.copy(filter = filter) }
@@ -128,10 +134,14 @@ class ChabiViewModel(private val repository: TripRepository, private val store: 
         copy(participants = participants.map { if (it.id == id) it.copy(name = name.take(20)) else it })
     }
     private fun change(block: SettlementDraft.() -> SettlementDraft) {
-        val old = mutableState.value
-        val draft = old.draft.block()
-        mutableState.value = derive(old.copy(draft = draft))
-        saves.trySend(draft)
+        val state = mutableState.value
+        val edited = state.draft.block()
+        val draft = edited.copy(resumeStage = state.step.draftStage ?: edited.resumeStage)
+        save(derive(state.copy(draft = draft)))
+    }
+    private fun save(state: DriveUiState) {
+        mutableState.value = state
+        saves.trySend(state.draft)
     }
     private fun derive(state: DriveUiState): DriveUiState {
         val preview = SettlementPreview.evaluate(state.trips, state.draft)

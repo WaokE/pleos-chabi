@@ -99,7 +99,9 @@ class ChabiViewModelTest {
     }
 
     @Test fun `unavailable saved trip blocks results rather than silently dropping cost`() {
-        val store = MemoryStore(SettlementDraft(selectedTripIds = setOf("weekend-1", "unavailable")))
+        val store = MemoryStore(SettlementDraft(
+            selectedTripIds = setOf("weekend-1", "unavailable"), resumeStage = DraftStage.RESULT,
+        ))
         val vm = ChabiViewModel(mockTrips(), store, MockDriveDefaultsRepository())
         vm.resumeDraft()
         val state = vm.state.value
@@ -143,6 +145,38 @@ class ChabiViewModelTest {
         assertEquals(415_000L, vm.state.value.distanceMeters)
     }
 
+    @Test fun `resume returns to the last step from home and after restarting the app`() {
+        val store = MemoryStore()
+        fun reopen() = ChabiViewModel(mockTrips(), store, MockDriveDefaultsRepository())
+        val first = reopen()
+        first.startNew()
+        first.toggleTrip("weekend-1")
+        first.back()
+        first.resumeDraft()
+        assertEquals(Step.TRIPS, first.state.value.step)
+
+        val atSelection = reopen()
+        atSelection.resumeDraft()
+        assertEquals(Step.TRIPS, atSelection.state.value.step)
+        assertEquals(98_000L, atSelection.state.value.distanceMeters)
+        atSelection.next()
+
+        val atReview = reopen()
+        atReview.resumeDraft()
+        assertEquals(Step.REVIEW, atReview.state.value.step)
+        atReview.next()
+
+        val atResult = reopen()
+        atResult.resumeDraft()
+        assertEquals(Step.RESULT, atResult.state.value.step)
+        atResult.back()
+        atResult.back()
+        atResult.back()
+        assertEquals(Step.HOME, atResult.state.value.step)
+        atResult.resumeDraft()
+        assertEquals(Step.TRIPS, atResult.state.value.step)
+    }
+
     @Test fun `new settlement resets extras and people while resume preserves all legacy inputs`() {
         val original = SettlementDraft(selectedTripIds = MockTripRepository.weekendIds,
             expenses = listOf(Expense("legacy", ExpenseCategory.OTHER, "커피", 1001, participantIds = setOf("me"))))
@@ -150,11 +184,12 @@ class ChabiViewModelTest {
         val vm = ChabiViewModel(mockTrips(), store, MockDriveDefaultsRepository())
         vm.resumeDraft()
         assertEquals(Step.REVIEW, vm.state.value.step)
-        assertEquals(original, vm.state.value.draft)
+        assertEquals(original.copy(resumeStage = DraftStage.REVIEW), vm.state.value.draft)
         vm.startNew()
         assertTrue(vm.state.value.draft.selectedTripIds.isEmpty())
         assertTrue(vm.state.value.draft.expenses.isEmpty())
         assertEquals(4, vm.state.value.draft.participants.size)
+        assertFalse(vm.state.value.hasDraft)
         assertEquals("시연용 기준 단가", vm.state.value.draft.priceSource)
         assertEquals(vm.state.value.draft, store.draft)
     }
@@ -164,6 +199,7 @@ class ChabiViewModelTest {
         val vm = ChabiViewModel(mockTrips(), store, MockDriveDefaultsRepository())
         vm.startNew()
         vm.toggleGroup(MockTripRepository.weekendIds)
+        vm.next()
         vm.applyCostSettings("gasoline", "12.5", "1800", false, false)
         assertEquals("직접 입력", vm.state.value.draft.priceSource)
         assertFalse(vm.state.value.draft.priceIsMock)

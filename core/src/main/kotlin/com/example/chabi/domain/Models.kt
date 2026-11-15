@@ -82,7 +82,11 @@ data class Settlement(
     val costs: List<CostLine>,
     val shares: List<ParticipantShare>,
     val totalWon: Long,
-)
+) {
+    val hasRemainderAllocation get() = costs.any { it.amountWon % it.participantIds.size != 0L }
+}
+
+enum class DraftStage { TRIPS, REVIEW, RESULT }
 
 /** Editable input stays textual until validation; blank/invalid input must not become zero. */
 data class SettlementDraft(
@@ -102,4 +106,5 @@ data class SettlementDraft(
         Participant("me", "나"), Participant("guest-1", "동행 1"),
         Participant("guest-2", "동행 2"), Participant("guest-3", "동행 3"),
     ),
+    val resumeStage: DraftStage? = null,
 )

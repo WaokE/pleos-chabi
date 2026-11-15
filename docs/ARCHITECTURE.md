@@ -28,7 +28,7 @@ flowchart TD
 | route-map-maplibre | 실제 MapView·카메라·스타일·HTTP·수명주기 | 앱 UI, 데이터 구현 |
 | app | Compose UI, 화면 상태/전환, 저장 조율, Android 주행 제한/공유 동작 | UI에서 구체 데이터·지도·QR 구현 직접 사용 금지 |
 
-Application이 데이터/지도/QR 구현을 선택하고 계약으로 주입합니다. Activity는 주행 제한과 Android 수명주기를 연결합니다. ViewModel에 Context, MapView, ZXing 타입을 두지 않습니다. 클립보드·공유 Intent 같은 Android 화면 동작은 app에 유지합니다. 교체 요구가 없는 동작까지 인터페이스로 늘리지 않습니다.
+Application이 데이터/지도/QR 구현을 선택하고 계약으로 주입합니다. Activity는 주행 제한과 Android 수명주기를 연결합니다. ViewModel에 Context, MapView, ZXing 타입을 두지 않습니다. 교체 요구가 없는 동작까지 인터페이스로 늘리지 않습니다.
 
 ## ViewModel과 데이터 수명주기
 

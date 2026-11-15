@@ -1,14 +1,7 @@
-@file:OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
-
 package com.example.chabi.ui
 
 import com.example.chabi.format.*
 
-import android.content.ClipData
-import android.content.ClipboardManager
-import android.content.Context
-import android.content.Intent
-import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -18,7 +11,6 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import com.example.chabi.handoff.QrEncoder
 import com.example.chabi.domain.TripDataSource
@@ -29,7 +21,6 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun ResultStep(state: DriveUiState, vm: ChabiViewModel, qrEncoder: QrEncoder) {
     val result = state.settlement
-    val context = LocalContext.current
     var showQr by rememberSaveable { mutableStateOf(false) }
     var details by rememberSaveable { mutableStateOf(false) }
     if (result == null) {
@@ -37,7 +28,7 @@ fun ResultStep(state: DriveUiState, vm: ChabiViewModel, qrEncoder: QrEncoder) {
             PleosButton(onClick = { vm.setStep(Step.REVIEW) }) { Text("비용·인원 다시 보기") } }
         return
     }
-    val fullText = remember(result, state.draft, state.source) { ResultSummary.full(result, state.draft, state.source == TripDataSource.MOCK) }
+    val isMock = state.source == TripDataSource.MOCK
     val hero: @Composable ColumnScope.() -> Unit = {
         Panel {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(20.dp)) {
@@ -53,25 +44,11 @@ fun ResultStep(state: DriveUiState, vm: ChabiViewModel, qrEncoder: QrEncoder) {
                 style = if (uniform) MaterialTheme.typography.headlineLarge else MaterialTheme.typography.headlineSmall)
             Text("운행 ${result.tripCount}개 · ${distance(result.distanceMeters)}", style = MaterialTheme.typography.bodySmall, color = Muted)
             HorizontalDivider()
-            MoneyRow("예상 총액", won(result.totalWon), strong = true)
-            Text("나눈 금액을 모두 더하면 ${won(result.shares.sumOf { it.amountWon })}이에요", style = MaterialTheme.typography.labelMedium, color = Teal,
-                modifier = Modifier.testTag("settlement-total"))
+            Box(Modifier.testTag("settlement-total")) { MoneyRow("예상 총액", won(result.totalWon), strong = true) }
             PleosButton(onClick = { showQr = true }, modifier = Modifier.fillMaxWidth().heightIn(min = 100.dp).testTag("show-qr"),
                 shape = RoundedCornerShape(32.dp)) {
-                DriveIcon(DriveSymbol.SHARE, Modifier.size(28.dp), LocalContentColor.current)
+                DriveIcon(DriveSymbol.QR, Modifier.size(28.dp), LocalContentColor.current)
                 Spacer(Modifier.width(12.dp)); Text("휴대폰으로 요약 받기")
-            }
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                PleosOutlinedButton(onClick = {
-                    (context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager)
-                        .setPrimaryClip(ClipData.newPlainText("차비 정산", fullText))
-                    Toast.makeText(context, "정산 내역을 복사했어요", Toast.LENGTH_SHORT).show()
-                }, modifier = Modifier.testTag("copy-result")) { Text("복사하기") }
-                PleosOutlinedButton(onClick = {
-                    val send = Intent(Intent.ACTION_SEND).apply { type = "text/plain"; putExtra(Intent.EXTRA_TEXT, fullText) }
-                    try { context.startActivity(Intent.createChooser(send, "정산 내역 공유")) }
-                    catch (_: android.content.ActivityNotFoundException) { Toast.makeText(context, "공유할 수 있는 앱이 없어요. QR이나 복사를 이용해 주세요.", Toast.LENGTH_SHORT).show() }
-                }, modifier = Modifier.testTag("share-result")) { Text("공유하기") }
             }
         }
         Text("연비와 단가로 계산한 금액이라 실제 주유·충전 금액과 다를 수 있어요.", style = MaterialTheme.typography.labelSmall, color = Muted)
@@ -93,7 +70,9 @@ fun ResultStep(state: DriveUiState, vm: ChabiViewModel, qrEncoder: QrEncoder) {
                     Text(won(share.amountWon), style = MaterialTheme.typography.titleSmall)
                 }
             }
-            Text("나누고 남은 1원은 위에서부터 한 명씩 더했어요.", style = MaterialTheme.typography.labelSmall, color = Muted)
+            if (result.hasRemainderAllocation) {
+                Text("비용을 나누고 남은 원은 등록 순서대로 1원씩 더했어요.", style = MaterialTheme.typography.labelSmall, color = Muted)
+            }
         }
         PleosOutlinedButton(onClick = { details = !details }, modifier = Modifier.fillMaxWidth().testTag("toggle-result-details")) {
             Text(if (details) "계산 내역 접기" else "계산 내역 보기")
@@ -107,7 +86,7 @@ fun ResultStep(state: DriveUiState, vm: ChabiViewModel, qrEncoder: QrEncoder) {
             Text("적용 단가 ${state.draft.unitPriceInput}원/${result.energyType.quantityUnit}", style = MaterialTheme.typography.bodySmall)
             PriceBasisNote(state.draft)
         }
-        if (state.source == TripDataSource.MOCK) Text("예시 운행으로 계산한 결과예요.", style = MaterialTheme.typography.labelSmall, color = Muted)
+        if (isMock) Text("예시 운행으로 계산한 결과예요.", style = MaterialTheme.typography.labelSmall, color = Muted)
     }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         if (maxWidth >= PleosBreakpoints.TwoColumnWidth) Row(Modifier.fillMaxSize().verticalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(24.dp)) {
@@ -115,7 +94,7 @@ fun ResultStep(state: DriveUiState, vm: ChabiViewModel, qrEncoder: QrEncoder) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(20.dp), content = shares)
         } else Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(20.dp)) { hero(); shares() }
     }
-    if (showQr) QrHandoff(ResultSummary.create(result, state.draft, state.source == TripDataSource.MOCK), qrEncoder, onDismiss = { showQr = false })
+    if (showQr) QrHandoff(ResultSummary.create(result, state.draft, isMock), qrEncoder, onDismiss = { showQr = false })
 }
 
 /**

@@ -4,10 +4,10 @@ import com.example.chabi.domain.*
 
 /** Compact, self-contained phone handoff. No links, accounts, location traces or server upload. */
 object ResultSummary {
-    /** QR text: totals and each person's amount only, short enough for 20 people in one code. */
+    /** Compact enough for 20 people in one code. */
     fun create(result: Settlement, draft: SettlementDraft, isMock: Boolean): String = buildString {
         appendLine("[차비] 정산 요약")
-        if (isMock) appendLine(SharedNotice.MOCK_TRIPS)
+        if (isMock) appendLine("※ 예시 운행으로 계산한 결과예요.")
         appendLine("운행 ${result.tripCount}개 · ${distance(result.distanceMeters)}")
         appendLine("예상 ${result.energyType.title} ${won(result.energyEstimate.amountWon)}")
         // Read extra costs from the settlement, not the draft, so the QR always matches the computed total.
@@ -18,16 +18,9 @@ object ResultSummary {
             appendLine("${index + 1}. ${share.participant.name.trim().take(12)} ${won(share.amountWon)}")
         }
         appendLine(priceLine(result, draft))
-        if (draft.priceIsMock) appendLine(SharedNotice.MOCK_PRICE)
-        appendLine(SharedNotice.REMAINDER)
+        if (draft.priceIsMock) appendLine("예시 단가예요. 실제 평균가가 아니에요.")
+        if (result.hasRemainderAllocation) appendLine("비용을 나누고 남은 원은 등록 순서대로 1원씩 더했어요.")
         append("실제 주유·충전 금액과 다를 수 있어요. 송금은 하지 않아요.")
-    }
-
-    /** Copy/share text: the full breakdown plus the unit price it was computed with. */
-    fun full(result: Settlement, draft: SettlementDraft, isMock: Boolean): String = buildString {
-        append(SettlementText.create(result, isMock))
-        append("\n\n").append(priceLine(result, draft))
-        if (draft.priceIsMock) append("\n").append(SharedNotice.MOCK_PRICE)
     }
 
     /** "단가 1700원/L · 시연용 기준 단가 · 2026-11-04"; the date is omitted when unknown. */
