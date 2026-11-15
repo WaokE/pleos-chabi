@@ -5,7 +5,7 @@
 ## Foundations
 
 - [Introduction](https://document.pleos.ai/docs/connect/guide/docs-design/Introduction/intro): 충분한 명도 대비, 짧은 안내, 주야간 대응 및 터치 피드백을 적용합니다. 일반 안내는 최대 3줄로 구성하고 금액·오류 등 의사결정에 필요한 내용은 별도로 표시합니다.
-- [Colors](https://document.pleos.ai/docs/connect/guide/docs-design/foundations/colors): 공식 회색 팔레트를 기본으로 사용합니다. 앱 고유의 강조색은 주간 `#126B58`, 야간 `#A4E2C1`이며 배경과 함께 전환합니다. 시스템 차량 UI의 상태 색상을 재정의하지 않습니다.
+- [Colors](https://document.pleos.ai/docs/connect/guide/docs-design/foundations/colors): 차량 설정 → 디스플레이의 자동·라이트·다크를 Android의 주야간 구성으로 따릅니다. 그래파이트·팝 색상은 [AAOS OEM 디자인 토큰](https://source.android.com/docs/automotive/unbundled_apps/design-tokens)의 선택형 공유 라이브러리에서 읽습니다. 라이브러리가 없거나 제공 색상의 명도 대비가 부족하면 내장 팔레트의 주간 `#126B58` 또는 야간 `#A4E2C1` 강조색을 적용합니다.
 - [Typography](https://document.pleos.ai/docs/connect/guide/docs-design/foundations/typography): Asta Sans를 번들에 포함했습니다. OFL 원문도 APK assets에 포함합니다. Headline 60/56/48, Title 40/36/32, Body 30/28/26, Label 24/20을 사용합니다. 화면 공간이 작으면 작은 계층의 제목을 선택하고 본문을 과도하게 줄이지 않습니다.
 
 공식 이미지의 숫자 크기를 글자는 `sp`, 레이아웃은 `dp`로 적용합니다. API 34 에뮬레이터의 160dpi 환경에서는 레이아웃 값이 픽셀 값과 일치합니다. 실제 디스플레이에서의 물리적인 글자·터치 크기는 기기 밀도를 포함해 추가 확인해야 합니다.
@@ -23,7 +23,7 @@ Material 3의 기본 크기를 그대로 사용하지 않고 `ui/PleosComponents
 | [Checkbox](https://document.pleos.ai/docs/connect/guide/docs-design/components/selections/checkbox) | 48 크기의 체크 표시, 모서리 12. Trip 카드 전체가 체크 조작 영역이며 선택 상태를 접근성에 전달 |
 | [Text Field](https://document.pleos.ai/docs/connect/guide/docs-design/components/fields/text-field) | 최소 80 높이 / 모서리 24, 본문 28, 라벨 24, 포커스·오류 구분 |
 | [Segmented Menu](https://document.pleos.ai/docs/connect/guide/docs-design/components/segmented-menu) | 연료 종류·빠른 인원 선택의 선택 상태 구분. 단계 표시는 조작 없는 진행 안내로 단순화 |
-| [System Popup](https://document.pleos.ai/docs/connect/guide/docs-design/components/popups/system-popup) | Medium 표기 너비 760을 최대값으로 적용. 모서리 48, 안쪽 여백 48, 스크롤 본문과 별도 하단 동작 영역 |
+| [System Popup](https://document.pleos.ai/docs/connect/guide/docs-design/components/popups/system-popup) | 기본 모달 최대 너비 760dp, 카드 뽑기 최대 너비 1120dp. 모서리와 안쪽 여백은 48dp이며, 본문은 스크롤하고 하단 동작 영역은 고정합니다. |
 
 빠른 선택 칩은 64 이상, 토글 조작 영역은 96×80입니다. 버튼과 빠른 선택 등에 터치 피드백을 제공합니다. 팝업은 작은 창과 키보드 표시 시 가용 높이에 맞추고 저장·취소 버튼을 본문 스크롤 밖에 둡니다.
 
@@ -55,4 +55,4 @@ Pleos Connect 2.1.0 / Android API 34 ARM64 에뮬레이터에서 다음을 확�
 
 현재 MVP의 구체적인 화면 흐름과 Mock 연동 경계는 [UX_FLOW.md](UX_FLOW.md)를 참고합니다.
 
-0.6에서 적용한 친근한 색·캐릭터·화면별 정보 계층은 [디자인 방향](DESIGN_DIRECTION.md)에 정리했습니다. 주요 버튼에도 앱 강조색을 사용하며 주야간·눌림 상태의 글자 대비 검사를 유지합니다.
+0.6에서 적용한 색·캐릭터·화면별 정보 계층은 [디자인 방향](DESIGN_DIRECTION.md)에 정리했습니다. 주요 버튼과 눌림 상태는 주야간 글자 대비를 검사합니다.

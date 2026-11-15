@@ -25,6 +25,8 @@ Device Manager의 `Pleos_Connect_2_1_API_34`를 사용합니다. Cold Boot / RAM
 ./scripts/install-debug.sh
 ```
 
+여러 에뮬레이터가 실행 중이면 `ANDROID_SERIAL=emulator-5554 ./scripts/install-debug.sh`처럼 대상 기기를 지정합니다. 스크립트는 debug APK를 빌드하고 선택한 기기에 설치한 뒤 앱을 실행합니다. 제출 APK의 위치와 상태는 [APK 안내](../apk/README.md)에 있습니다.
+
 다른 Apple Silicon Mac에 이미지를 설치하려면 Android Studio SDK Manager → SDK Update Sites에 아래 공식 URL을 추가한 뒤 API 34의 Pleos Connect 이미지를 설치하고, Automotive → Pleos Connect v2.1.0 기기로 AVD를 생성합니다.
 
 `https://nexus-playground.pleos.ai/repository/raw-releases/connect-avd/2.x/crp-arm64-sys-img.xml`
@@ -35,7 +37,7 @@ Device Manager의 `Pleos_Connect_2_1_API_34`를 사용합니다. Cold Boot / RAM
 
 `core` 모듈의 `TripRepository` 계약:
 
-- `source`: Mock인지 실제 차량인지 구분하는 표시 정보.
+- `source`: 예시 운행과 실제 차량 데이터를 구분합니다. 현재 예시 운행 화면에서는 출처 칩을 표시하지 않습니다.
 - `getTrips()`: 접근 가능한 운행 기록 목록.
 - `getTripDetail(id)`: 개별 운행의 상세 기록 또는 null.
 
@@ -51,11 +53,11 @@ Device Manager의 `Pleos_Connect_2_1_API_34`를 사용합니다. Cold Boot / RAM
 6. 취득 가능한 값만 매핑하고 미지원 기능은 실패/미지원으로 반환.
 7. 새 데이터 소스에서 저장된 Trip ID가 사라지면 조용히 계산에서 빼지 않고 사용자가 선택을 다시 확인하도록 처리.
 
-차량 이력·인증·차량 권한은 실제 구현체를 추가할 때 필요한 범위만 도입합니다. Vehicle SDK와 NaviHelper는 현재 빌드에 포함하지 않습니다. 지도 표시를 위해 MapLibre Native 13.7.1, OkHttp 4.12.0 및 INTERNET/ACCESS_NETWORK_STATE 권한을 사용합니다. 위치 권한이나 API 키는 필요하지 않습니다.
+차량 이력·인증·차량 권한은 실제 구현체를 추가할 때 필요한 범위만 도입합니다. 지도 표시에는 MapLibre Native OpenGL 13.7.1, OkHttp 4.12.0과 지도 모듈의 INTERNET/ACCESS_NETWORK_STATE 권한을 사용합니다.
 
 ## 차량 기본값과 단가
 
-`DriveDefaultsRepository`는 차량 기본값과 에너지별 기준 단가를 제공합니다. 현재 Application의 바인딩은 `MockDriveDefaultsRepository`입니다. 실제 차량/가격 소스를 도입할 때 이 경계를 교체하며, UI와 계산 계층에 SDK 타입을 전파하지 않습니다. 구현은 `data-local`, 계약은 `core`에 있습니다. 단가 출처·기준일은 초안에 저장하고 QR 요약에 포함합니다. 재실행 시 새 기본값으로 덮어쓰지 않습니다.
+`DriveDefaultsRepository`는 차량 기본값과 에너지별 기준 단가를 제공합니다. 현재 Application의 바인딩은 `MockDriveDefaultsRepository`입니다. 실제 차량/가격 소스를 도입할 때 이 경계를 교체하며, UI와 계산 계층에 SDK 타입을 전파하지 않습니다. 구현은 `data-local`, 계약은 `core`에 있습니다. 단가 출처·기준일은 초안에 저장합니다. 재실행 시 새 기본값으로 덮어쓰지 않습니다.
 
 가격 API와 실제 차량 연료 종류 자동 조회는 아직 구현하지 않았습니다. 상세 결정은 [UX_FLOW.md](UX_FLOW.md)에 기록했습니다.
 
@@ -71,7 +73,7 @@ Device Manager의 `Pleos_Connect_2_1_API_34`를 사용합니다. Cold Boot / RAM
 
 ## 초안 저장
 
-`DraftStore`는 suspend 계약이며 `data-local/LocalDraftStore`가 앱 전용 SharedPreferences에 버전이 있는 JSON 초안 하나를 저장합니다. 읽기·JSON 변환·디스크 쓰기는 주입한 IO dispatcher에서 수행합니다. ViewModel의 단일 저장 큐로 쓰기 순서를 보장하고 디스크 쓰기 실패는 사용자에게 알립니다. 선택 Trip ID, 연료 프리셋 ID, 연비/단가와 출처·기준일, 추가 경비, 참가자와 분담 설정을 보존합니다. 초안 JSON에 프리셋 ID·단가 출처 필드가 없으면 기본값으로 읽으며 기타 비용·부분 참여도 유지합니다. 정산 결과는 저장한 초안과 Repository 데이터에서 다시 계산합니다. 초안의 네트워크 전송과 계정은 없습니다. 지도 타일은 별도 네트워크 요청으로 로드합니다. 별도 이력 목록은 없습니다.
+`DraftStore`는 suspend 계약이며 `data-local/LocalDraftStore`가 앱 전용 SharedPreferences에 버전 1의 JSON 초안 하나를 저장합니다. 읽기·JSON 변환·디스크 쓰기는 주입한 IO dispatcher에서 수행합니다. ViewModel의 단일 저장 큐로 쓰기 순서를 보장하고 디스크 쓰기 실패는 사용자에게 알립니다. 선택 Trip ID, 연료 프리셋 ID, 연비·단가·출처·기준일, 추가 경비, 참가자와 분담 설정, 마지막 단계와 확정한 카드 결과를 보존합니다. 기존 초안에 마지막 단계나 카드 결과가 없으면 해당 값은 비워 둡니다. 정산 결과는 저장한 초안과 Repository 데이터에서 다시 계산합니다.
 
 ## 앱 내부 지도
 
@@ -104,8 +106,10 @@ Mock 경로는 assets의 `mock_routes.geojson`에서 읽고 Repository를 통해
 
 Repository/초안 저장 계약은 순수 Kotlin `core`에 있고 ViewModel은 이를 생성자에서 명시적으로 주입받습니다. ViewModel은 Mock 기본 구현을 갖지 않습니다. 지도 SDK는 `route-map-maplibre` 안에만 두며 `verifyArchitecture`가 모듈 의존성과 금지된 소스 참조를 검사합니다. 앱 `preBuild` 및 각 모듈 `check`에 연결되어 있습니다. [교체 절차와 모듈 설명](ARCHITECTURE.md)
 
-## QR와 검증 진입점
+## 결과 화면과 검증 진입점
 
-`core/handoff/QrEncoder`는 라이브러리 중립 QR 매트릭스를 반환합니다. `handoff-zxing`이 CPU dispatcher에서 인코딩하며 ZXing 타입은 해당 모듈에만 있습니다. UI는 취소를 전파하고 중립 매트릭스를 그립니다. 생성 실패 시 같은 요약으로 다시 시도할 수 있습니다.
+결과 화면의 1/N 정산 버튼은 발급된 카카오페이 링크를 `QrEncoder`에 전달합니다. `handoff-zxing`이 링크 QR을 생성하고 UI는 중립 매트릭스를 그립니다. 금액과 참가자 정보는 로컬에 남으며 휴대폰에서 링크를 엽니다. 버튼 자산은 [공식 Regular 버튼](https://developers.kakaopay.com/docs/moneytransfer/splitbills.link/splitbills-link-hands-on#design-guide)입니다.
+
+카드 뽑기에서 당첨 카드가 열리면 남은 카드를 공개하고 `res/raw/card_draw_confetti.json`을 Lottie Compose 6.7.1로 한 번 재생합니다. 사용자가 결과를 확정하면 ViewModel이 초안에 저장합니다.
 
 로컬과 CI는 `scripts/check.sh`를 공통 진입점으로 사용합니다. CI는 JDK 17과 Android Platform 36/Build Tools 35.0.0을 준비하며 에뮬레이터 없이 단위 테스트·구조 검사·Lint·debug APK를 검증합니다. 실제 차량/에뮬레이터 UI 검증을 대체하지 않습니다. [checkout 공식 사용법](https://github.com/actions/checkout), [setup-java 공식 사용법](https://github.com/actions/setup-java).
